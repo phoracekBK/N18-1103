@@ -1,0 +1,158 @@
+
+
+
+** Popois systému **
+Ultrabonding je stroj, který ultrazvukovými sonotrodami navařuje plastové pásky na tkaninu, která tvoří základ pro clonky prosklené střechy auta.
+
+Stroj se skládá z jednoho páru svařovacích sonotrod umístěných na pohyblivých osách, pohybující se v lineárním směru. Osy nejsou vzájemně propojené a jejich vzájemná poloha je synchronizována pouze pomocí softwaru v PLC. Sonotrody jsou upevněny na 3 pozičních ventilech, které sjíždí do svařovací polohy v případě, že jsou v lineárním směru na zvařovací pozici (dle programu svařování) do mezipolohy v případě, že se dle svařovacího programu v lineárním směru přesouvají do následující polohy pro svařování, nebo v horní poloze kde jsou umístěny vpřípadě, že se vracejí do domovské pozice a nebo se nacházejí nad zakázanou oblastí kde by mohlo dojít k jejich mechanickému poškození při sjetí do svařovací polohy a nebo jsou-li sonotrody v domovské pozici
+Plastové pásky jsou na pozice pro navaření umístěny napínacím mechanismem, který pak zároveň umožňuje navíjení navařené tkaniny na hliníkovou hřídel. Napínací systém se skládá z pojezdů, které se pohybují v lineárním směru stejně jako svařovací sonotrody (na jiných pojezdech) a plastové pásky jsou na něj zaháknuté. Plastové pásky udržuje v napnutém stavu servo mechanismus, který pracuje v režimu Torq (režim předpětí), který působí určitým konstantním kroutícím momentem v opačném směru pohybu plastových pásek. Na konci pracovního cyklu kdy jsou plastové pásky navařené na tkaninu je tento servo mechanismus přepnut do režimu Electronic Gear, kdy je na základě hodnot z externího pozičního enkoderu napojeného na napínací systém a jeho pozice je s tímto enkoderem synchronizována. 
+Aby bylo možné na konci cyklu zavést navařenou tkaninu na hliníkovou hřídel, je nutné deaktivovat servo motor a uplně jej uvolnit aby bylo možné jednoduše nastavit pozici hlíníhové hřídele. K tomu slouží dodatečné tlačítko jejímž stiskem je možné zapnout případně opět vypnout synchronizaci pozice servomotorus napínacím systémem.
+Plastové pásky jsou při svém zavádění na svařovací pozici nejprve napnuty na pozici 1, která je definována stopery v zadní pozici stroje. U těchto stoperů se nacházejí poziční čidla která při své aktivaci inicializují střih plastové pásky s následným odblokováním stoperů. Tím je umožněno napínacím systémem dojet do koncové pozice. Střižný mechanismus se nachzí v párnu na obou stranách stroje. 
+Po napnutí plastových pásek do svařovací pozice, zavedení a ukotvení tkaniny jsou splněny všechny podmínky pro spuštění svářovacího programu. Svařovací program je definován v PLC a na základě konfigurace z HMI je zvolena daná konfigurace svařování.
+Bezpečnost stroje zajišťují dva periferní skenery které detekují předměty a osoby v zakázané zóně ve které by mohlo dojít k úrazu.
+
+Stroj kvůli urychlení pracovního cyklu nepoužívá homovací sekvenci, která používá nižší rychlosti kvůli možným kolizím. Místo toho se používá nastavení výchozí polohy na počátku/konci cyklu. Cyklické používání stroje ale může způsobit rozhození pozice a to je nežádoucí. Uvnitř programu bude zabudováno počítadlo svařovacích cyklů a každých X (parametrizovatelné z HMI) svařovacích cyklů na konci cyklu dojde k automatického vyhomování polohy (kalibrace pozice).
+
+** Architektura **
+Celý systém se skládá ze tří vrstev:
+	* Vrstva hardware
+	* Vrstva firmware
+	* Aplikační vrstva
+
+Vrstva hardware obsahuje kód pro obsluhu hardwarových komponent: ventily, servo motory, últrazvukové sonotrody
+Vrstva firmware poskytuje rozhraní pro pohodlné ovládání harwarových komponent: střižný mechanismus, nastavení svařovacích programů, komunikace s HMI, svařovací procedůru, bezpečnost
+Aplikační vrstva obsahuje: pracovní cyklus a alarmové stavy
+
+Uživatelské rozhraní v HMI se bude skládat z několika obrazovek:
+	- hlavní obrazovka
+	- obrazovka přehled motorů
+	- obrazovky s nastavením a řízením jednotlivými motory
+	- nastavení svářecích programů
+	- nastavení HMI a systému rozhraní
+	- manuální ováldací režím ventilů
+	- ovládání sonotrod (zobrazení aktuálního stavu, chyb, ovládání pulzů, nastavení programů, reset sonotrod, vizualizace sonotrod, vizualizace vstupů a výstupů)
+	- aktuální přehled vstupů a výstupů
+	- chyby
+	- nastavení uživatelů
+
+** Poznámky **
+položky v systémovém nastavení: nastavení minimální bezpečné pozice pro sjetí sonotrod
+
+
+
+maximální pozice lineárních serv je 1906 mm.
+
+
+** Pracovní kroky **
+	* inicializace počátečních podmínek
+	* nastavení vozíků na pozici pro zavedení plastové pásky
+	* nastavení vozíků s plastovými páskamy na pozici pro střih
+	* nastavení vozíků na pozici pro svařování
+	* čekání na splění podmínek pro spuštění svařování
+	* svařování
+	* navíjení látky
+	* dokončení
+
+
+
+
+** Postup testování a ladění stroje ** 
+nahrát konfiguraci do driveru serv	- hotovo
+nastavit bezpečnou zónu pro sjetí svářecích sonotrod - hotovo
+nastavení všech čidel a ventilů - na všechny ventily nastavit release = true - hotovo
+stříhový mechanismus - nastavení čidel ventilů - hotovo
+sonotrody - ovládání sonotrod, nastavení čidel ventylů - hotovo
+serva - ověření funkčnosti všech režimů a reset chyb - hotovo
+svařovací cyklus - hotovo
+pracovní cyklus - hotovo
+
+
+IP adresy:
+	PLC - 192.168.0.1
+	HMI - 192.168.0.2
+	ET200_R1A1 - 192.168.0.3 
+	Schneider LEFT - 192.168.0.4
+	Schneider RIGHT - 192.168.0.5
+	Schneider TENSION - 192.168.0.6
+
+
+** BUG **
+
+
+** TODO **
+* vytvořit upozornění na změnu režimů manual/manual_automat při uvolnění ventilů
+* vytvořit rozhraní v hmi pro sledování stavu vstupů a výstupů
+* dodělat překlad rozhraní HMI pro češtinu
+* přehodit polaritu centrálních klamp při manuálním (manual_automat) režimu
+* doladit chybové hlášení a reakci na chybné stavy
+
+
+** DONE **
+* doladit chybné dokončení střihového mechanismu
+* přidat funkcionalitu na kopírování programů
+* otestovat a vyladit pracovní cyklus
+* otestovat subsystém pro práci s motory
+* přidat režim torq do režimu svařování a čkání na spuštění svařování
+* otočit polaritu pohyblivých klemp ve střihovém subsystému (a = aretováno b = otevřeno)
+* otočit polaritu pohybu  statuských klemp ve střihovém subsystému (a = aretováno b = otevřeno)
+* dodělat čištění střižníku na levé straně
+* nahrát program do plc
+* nahrát program do hmi
+* nahrát konfiguraci do měničů
+* vytvořit rozhraní v hmi pro nastavení systému
+* vytvořit systém pro kontrolu plného odpadkového koše ve střihovém mechanismu
+* vytvořit systém pro kontrolu prázdné cívky ve střihovém mechanismu
+* vytvořit mechanismus nulování denní produkce
+* vytvořit systém pro sledování tlaku ve válcích sonotrod
+* ruční spouštění svářecího programu
+* vytvořit alarmy v hmi
+* napojit alarmy
+* vytvořit uživatelský systém v hmi
+* vytvořit rozhraní v hmi pro práci s uživatelským systémem
+* vytvořit rozhraní v hmi pro práci s chybovým bufferem
+* vytvořit rozhraní v hmi pro práci se střihovým subsystémem
+* navrhnout, implementovat a otestovat subsystém pro alarmy a řízení vnitřního chybového stavu
+* navrhnout, implementovat subsystém pro řízení motorů
+* navrhnout, implementovat pracovní cycklus stroje
+* propojit všechny subsystémy
+* napojit manuální ovládání ventilů sonotrod
+* podle dokumentace mapovat vstupy a výstupy v projektu
+* vytvořit rozhraní v hmi pro manuální práci s ventily
+* umožnit swaření sonotrod až v bezpečné zóně (mimo domovskou pozici kde by mohlo dojít k poškození dokovací stanice)
+* automatický režim aktivovat až po aktivaci řídících obvodů
+* ventily aktovovat až potom co jsou aktivovány řídící obvody (jinak jsou uvolněné kvůli bezpečnosti při zapínání)
+* mechanismus který upozorní při nastavování šířky stroje na kontrolu kolizního stavu sonotrod
+* zabezpečit aby sonotrody nemohly sjet dolů v případě, že nejsou v bezpečné zóně kde nedojde ke kolizi
+* zabezpečit aby se serva nemohly hýbat pokud nejsou sonotrody v horní pozici
+* vytvořit textový list do vizualizace pro popis vnitřního stavu pracovního cyklu
+* vytvořit obrázek sonotrody do vizualizace
+* vytvořit počítadlo pro produkci a střih (pro vyměnu cívky a vysypání zásobníku na odstřížky)
+* navrhnout, implementovat a otestovat svářecí subsystém
+* navrhnout, implementovat a otestovat knihovnu po ovládání ventilů
+* vytvořit strukturu nastavení svařovacího programu a ukládání do paměti plc
+* navrhnout, implementovat a otestovat knihovnu pro ovládání ultrazvukových sonotrod Herrmann
+* navrhnout, implementovat a otestovat subsystém pro ovládání střižných mechanismů
+* vytvořit časový plán
+* vytvořit architekturu systému
+* definovat jednotlivé use case
+* založit projekt TIA portalu
+* konfigurovat nový projekt
+* vytvořit testovací projekt v TIA portálu
+
+
+
+** TIME SCHEDULE **
+
+* 4.7.2019 - zahájení projektu
+* 4.7.2019 - vytvořit specifikaci a architekturu systému
+* 8.7.2019 - vytvořit projekt v TIA portálu
+* 8.7.2019 - konfigurovat projekt v TIA portálu
+* 8.7.2019 - vytvořit kostru systému
+* 10.7.2019 - grafický návrh uživatelského rozhraní HMI
+* 10.7.2019 - připravit grafické uživatelské rozhraní v HMI
+* 11.7.2019 - vytvořit testovací projekt v TIA portálu
+* 11. až 12.7.2019 - návrh funkčních bloků jednotlivých vrstev a jejich testy
+* 15. až 19.7.2019 - realizace a jednotkové testování funkčních bloků 
+* 22. až 25.7.2019 - zavádění projektu, konfigurace hardware, integrační, systémové a akceptační testy, ladění
+* 26.7.2016 - vytvořit dokumentaci v angličtině
+* 26.7.2019 - deadline
